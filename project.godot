@@ -14,6 +14,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Game/Combat/AIStrategyBase.gd"
 }, {
+"base": "Reference",
+"class": "AhoCorasick",
+"language": "GDScript",
+"path": "res://Modules/HypnokinkModule/Speech/HK_AhoCorasick.gd"
+}, {
 "base": "Orifice",
 "class": "AnusOrifice",
 "language": "GDScript",
@@ -1711,6 +1716,7 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "AIStrategyBase": "",
+"AhoCorasick": "",
 "AnusOrifice": "",
 "AttachmentProxy": "",
 "Attack": "",
