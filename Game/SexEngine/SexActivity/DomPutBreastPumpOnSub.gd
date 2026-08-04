@@ -121,7 +121,7 @@ func milkingSub_processTurn():
 		text += RNG.pick([
 			"The breast pump stimulates {sub.your} {sub.breasts}.",
 			"The breast pump stimulates {sub.your} {sub.breasts} but doesn't draw any milk out.",
-			"The breast pump tries to milk {sub.your} {sub.breasts} but {sub.youHe} {sub.youAre} not lactating.",
+			"The breast pump tries to milk {sub.your} {sub.breasts} but {sub.youHe} {sub.youAreHeIs} not lactating.",
 		])
 		var suddenlyLactate = false
 		if(getSub().stimulateLactation()):
@@ -131,11 +131,12 @@ func milkingSub_processTurn():
 			])
 		sendSexEvent(SexEvent.BreastsPumpMilked, DOM_0, SUB_0, {loadSize=0.0, madeLactate=suddenlyLactate})
 	
-	if(!noticedSore && getSub().hasPerk(Perk.MilkNoSoreNipples)):
+	var _isSore:bool = getSub().hasEffect(StatusEffect.SoreNipplesAfterMilking)
+	if(!noticedSore && _isSore):
 		noticedSore = true
 		text += " {sub.YourHis} nipples [b]got sore[/b] from so much milking!"
 	
-	if(getSub().hasEffect(StatusEffect.SoreNipplesAfterMilking)):
+	if(_isSore):
 		var howMuchPainAdd = RNG.randi_range(2, 5)
 		getSubInfo().addPain(howMuchPainAdd)
 		sendSexEvent(SexEvent.PainInflicted, DOM_0, SUB_0, {pain=howMuchPainAdd,isDefense=false,intentional=false})

@@ -104,8 +104,8 @@ func handjob_processTurn():
 		addText(RNG.pick([
 			"{sub.You} {sub.youAre} about to cum!",
 			"{sub.You} {sub.youAre} being kept on edge.",
-			"{sub.You} {sub.penisShort} is twitching and throbbing.",
-			"{sub.You} {sub.penisShort} is leaking pre a lot.",
+			"{sub.Your} {sub.penisShort} is twitching and throbbing.",
+			"{sub.Your} {sub.penisShort} is leaking pre a lot.",
 			"{sub.You} {sub.youAre} barely keeping {sub.yourself} from cumming.",
 			"{sub.You} reached {sub.yourHis} peak!",
 		]))
@@ -191,7 +191,7 @@ func doAction(_indx:int, _id:String, _action:Dictionary):
 	if(_id == "startHandjob"):
 		setState("handjob")
 		addTextPick([
-			"A tentacles wraps around {sub.your} {sub.penisShort} and proceeds to stroke it!",
+			"A tentacle wraps around {sub.your} {sub.penisShort} and proceeds to stroke it!",
 		])
 		stimulate(DOM_0, S_MOUTH, SUB_0, S_PENIS, I_TEASE, Fetish.OralSexGiving, SPEED_SLOW)
 		react(SexReaction.AboutToHandjobSub)
