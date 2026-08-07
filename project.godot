@@ -514,6 +514,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://Util/AutoTranslation/Translators/DeepLTranslator.gd"
 }, {
+"base": "TranslatorBase",
+"class": "DeepLTranslatorV2",
+"language": "GDScript",
+"path": "res://Util/AutoTranslation/Translators/DeepLTranslatorV2.gd"
+}, {
 "base": "Reference",
 "class": "DialogueFiller",
 "language": "GDScript",
@@ -785,6 +790,11 @@ _global_script_classes=[ {
 "path": "res://Util/AutoTranslation/Translators/GoogleBatchTranslator.gd"
 }, {
 "base": "TranslatorBase",
+"class": "GoogleGTXTranslator",
+"language": "GDScript",
+"path": "res://Util/AutoTranslation/Translators/GoogleGTXTranslator.gd"
+}, {
+"base": "TranslatorBase",
 "class": "GoogleTranslator",
 "language": "GDScript",
 "path": "res://Util/AutoTranslation/Translators/GoogleTranslator.gd"
@@ -908,6 +918,11 @@ _global_script_classes=[ {
 "class": "ItemState",
 "language": "GDScript",
 "path": "res://Inventory/ItemState.gd"
+}, {
+"base": "ItemState",
+"class": "ItemStateUnremovable",
+"language": "GDScript",
+"path": "res://Inventory/ItemStateUnremovable.gd"
 }, {
 "base": "Object",
 "class": "ItemTag",
@@ -2023,6 +2038,11 @@ _global_script_classes=[ {
 "class": "WritingsHandler",
 "language": "GDScript",
 "path": "res://Player/Player3D/WritingsHandler/WritingsHandler.gd"
+}, {
+"base": "TranslatorBase",
+"class": "YandexTranslator",
+"language": "GDScript",
+"path": "res://Util/AutoTranslation/Translators/YandexTranslator.gd"
 } ]
 _global_script_class_icons={
 "AIStrategyBase": "",
@@ -2126,6 +2146,7 @@ _global_script_class_icons={
 "DatapackSkin": "",
 "DatapackTriggerCodeContext": "",
 "DeepLTranslator": "",
+"DeepLTranslatorV2": "",
 "DialogueFiller": "",
 "DialogueFillerAdder": "",
 "DialogueForm": "",
@@ -2180,6 +2201,7 @@ _global_script_class_icons={
 "Gender": "",
 "GlobalTask": "",
 "GoogleBatchTranslator": "",
+"GoogleGTXTranslator": "",
 "GoogleTranslator": "",
 "GuardGenerator": "",
 "GuardLoot": "",
@@ -2205,6 +2227,7 @@ _global_script_class_icons={
 "ItemBase": "",
 "ItemCategory": "",
 "ItemState": "",
+"ItemStateUnremovable": "",
 "ItemTag": "",
 "JiggleBone": "",
 "JunkieLoot": "",
@@ -2427,7 +2450,8 @@ _global_script_class_icons={
 "WorldPopulation": "",
 "WorldZone": "",
 "WritingZoneInfoNode": "",
-"WritingsHandler": ""
+"WritingsHandler": "",
+"YandexTranslator": ""
 }
 
 [application]
