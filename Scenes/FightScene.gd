@@ -236,6 +236,7 @@ func _run():
 			sayn(activity)
 			
 	if(state == "playerMustDodge"):
+		playGetUpAnimsIfNeedTo()
 		var attack: Attack = GlobalRegistry.getAttack(savedAIAttackID)
 		
 		setEnemyAsAttacker()
@@ -258,7 +259,9 @@ func _run():
 			else:
 				addDisabledButton("Double down", "You can only double down on a basic physical attack")
 				
-	if(state == "" || state == "fighting"):		
+	if(state == "" || state == "fighting"):
+		playGetUpAnimsIfNeedTo()
+
 		addButtonWithChecks("Physical Attack", "Show a list of physical attacks that you can do", "physattacks", [], [ButtonChecks.NotStunned])
 		addButtonWithChecks("Lust Attack", "Show a list of lewd actions that you can do", "lustattacks", [], [ButtonChecks.NotStunned])
 		
@@ -290,6 +293,10 @@ func _run():
 		
 		if(GM.pc.hasPerk(Perk.BDSMRigger)):
 			addButtonWithChecks("Bondage", "Pick which restraint you wanna try to force onto your enemy", "bdsm_attacks", [], [ButtonChecks.NotHandsBlocked, ButtonChecks.NotArmsRestrained])
+		
+		if(!GM.pc.hasEffect(StatusEffect.Collapsed)):
+			addButton("Switch stance", "Switch your combat stance to the next one. This is just a visual change", "switchStance")
+		
 		
 		addButtonAt(14, "Submit", "Give up", "submit")
 		
@@ -378,14 +385,18 @@ func _react(_action: String, _args):
 		else:
 			var item:ItemBase = _args[0]
 			var restraintData:RestraintData = item.getRestraintData()
+			var theAttackToPlay:String = restraintData.getForceOnCombatAnim()
 			var finalSuccessChance = restraintData.getFinalChanceToForceARestraint(enemyCharacter)
 			
 			if(!RNG.chance(finalSuccessChance * 100.0) && enemyCharacter.getStamina() > 0):
 				enemyCharacter.addStamina(-10)
 				whatPlayerDid += GM.ui.processString("You try to force a restraint onto {receiver.name} but {receiver.he} avoided your attempt!")
 			
-				playAnimation(StageScene.Duo, "", {npc=enemyID, npcAction="dodge"})
+				if(!theAttackToPlay.empty()):
+					playAttackAnim({attackerAnimation=theAttackToPlay, dodged=true}, true)
 			else:
+				if(!theAttackToPlay.empty()):
+					playAttackAnim({attackerAnimation=theAttackToPlay}, true)
 				GM.pc.addSkillExperience(Skill.BDSM, restraintData.getLevel() * 3)
 				whatPlayerDid += GM.ui.processString(item.getForcedOnMessage(false))
 				
@@ -410,9 +421,9 @@ func _react(_action: String, _args):
 		beforeTurnChecks()
 		
 		whatPlayerDid += doPlayerAttack({"attackID": "trygetupattack"})
+		playGetUpAnimsIfNeedTo()
 		
 		whatEnemyDid += aiTurn()
-
 		afterTurnChecks()
 		return
 
@@ -466,7 +477,8 @@ func _react(_action: String, _args):
 		var result = attack.doAttack(enemyCharacter, GM.pc)
 		result["text"] = GM.ui.processString(result["text"])
 		
-		playAnimation(StageScene.Duo, result["receiverAnimation"], {npc=enemyID, npcAction=result["attackerAnimation"]})
+		#playAnimation(StageScene.Duo, result["receiverAnimation"], {npc=enemyID, npcAction=result["attackerAnimation"]})
+		playAttackAnim(result, false)
 		
 		whatEnemyDid += result["text"]
 		savedAIAttackID = ""
@@ -545,6 +557,7 @@ func _react(_action: String, _args):
 		
 		var lustCombatState:LustCombatState = GM.pc.getLustCombatState()
 		
+		var didAnyDamage:bool = false
 		var result = lustCombatState.doAction(actionData)
 		whatPlayerDid = GM.ui.processString(result["text"]).trim_suffix("\n\n")
 		if("lust" in result):
@@ -586,6 +599,8 @@ func _react(_action: String, _args):
 			if(isTease && enemyCharacter.getLustLevel() >= 0.6):
 				theDamage *= 1.0
 				extraText = "[b]Teasing is less effective when the enemy is horny![/b] "
+			if(theDamage > 0.0):
+				didAnyDamage = true
 			
 			var damage = enemyCharacter.receiveDamage(DamageType.Lust, int(round(theDamage)))
 			
@@ -608,6 +623,11 @@ func _react(_action: String, _args):
 		#	afterTurnChecks()
 		#	return
 		
+		if(result.has("anim")):
+			var theAnim:String = result["anim"]
+			if(!theAnim.empty()):
+				playAttackAnim({attackerAnimation=theAnim, missed=!didAnyDamage}, true)
+		
 		if("lostBattle" in result):
 			GM.pc.addLust(GM.pc.lustThreshold())
 			afterTurnChecks()
@@ -621,6 +641,10 @@ func _react(_action: String, _args):
 		whatEnemyDid += aiTurn()
 			
 		afterTurnChecks()
+		return
+	
+	if(_action == "switchStance"):
+		GM.pc.switchToNextCombatStance()
 		return
 	
 	setState(_action)
@@ -657,7 +681,8 @@ func doPlayerAttack(attackData):
 	var result = attack.doAttack(GM.pc, enemyCharacter, attackData)
 	result["text"] = GM.ui.processString(result["text"])
 	
-	playAnimation(StageScene.Duo, result["attackerAnimation"], {npc=enemyID, npcAction=result["receiverAnimation"]})
+	#playAnimation(StageScene.Duo, result["attackerAnimation"], {npc=enemyID, npcAction=result["receiverAnimation"]})
+	playAttackAnim(result, true)
 	
 	var expData = attack.getExperience()
 	for expAdd in expData:
@@ -693,7 +718,7 @@ func aiTurn():
 		
 		var animToPlay = restraintData.getResistAnimation()
 		if(animToPlay != null && animToPlay != ""):
-			playAnimation(StageScene.Duo, "", {npc=enemyID, npcAction=animToPlay})
+			playAnimation(StageScene.Combat, "", {npc=enemyID, npcAction=animToPlay})
 		
 		var damage = 0.0
 		var addLust = 0
@@ -772,7 +797,8 @@ func aiTurn():
 			var result = attack.doAttack(enemyCharacter, GM.pc)
 			result["text"] = GM.ui.processString(result["text"])
 				
-			playAnimation(StageScene.Duo, result["receiverAnimation"], {npc=enemyID, npcAction=result["attackerAnimation"]})
+			#playAnimation(StageScene.Duo, result["receiverAnimation"], {npc=enemyID, npcAction=result["attackerAnimation"]})
+			playAttackAnim(result, false)
 			
 			enemyText += result["text"]
 		else:
@@ -880,9 +906,11 @@ func afterTurnChecks():
 
 func onPCWin():
 	SexToyManager.sendTrigger(SexToyTrigger.OnFightWin)
+	playDefeatAnim()
 
 func onPCLose():
 	SexToyManager.sendTrigger(SexToyTrigger.OnFightDefeat)
+	playDefeatAnim()
 
 func onPCSubmit():
 	pass
@@ -915,7 +943,7 @@ func checkEnd():
 		whatHappened += "You succumb to pain\n"
 		battleState = "lost"
 		battleEndedHow = "pain"
-		playAnimation(StageScene.Solo, "defeat")
+		#playAnimation(StageScene.Solo, "defeat")
 		return "lost"
 	if(GM.pc.getLust() >= GM.pc.lustThreshold()):
 		if(whatHappened != ""):
@@ -923,7 +951,7 @@ func checkEnd():
 		whatHappened += "You're too aroused to continue\n"
 		battleState = "lost"
 		battleEndedHow = "lust"
-		playAnimation(StageScene.Solo, "defeat")
+		#playAnimation(StageScene.Solo, "defeat")
 		return "lost"
 	
 	return ""
@@ -1009,7 +1037,7 @@ func _react_scene_end(_tag, _result):
 		
 	if(_tag == "lootingscene"):
 		endScene([battleState, battleEndedHow])
-
+	
 func supportsBattleTurns():
 	return true
 
@@ -1093,3 +1121,54 @@ func canEquipRestraintOntoEnemySlotOrReason(itemSlot:String) -> Array:
 	elif(enemyCharacter.getInventory().hasSlotEquipped(itemSlot) && enemyCharacter.getInventory().getEquippedItem(itemSlot).isRestraint()):
 		return [false, "They are wearing this type of restraint already"]
 	return [true, ""]
+
+func getNPCStatus(_npc:BaseCharacter) -> int:
+	var _result:int = 0
+	if(_npc.hasEffect(StatusEffect.Collapsed)):
+		_result |= CombatAnimPlayer.ST_KNOCKEDDOWN
+	if(_npc.isDefocusing()):
+		_result |= CombatAnimPlayer.ST_DEFOCUSING
+	if(_npc.isBlocking()):
+		_result |= CombatAnimPlayer.ST_BLOCKING
+	if(_npc.isDodging()):
+		_result |= CombatAnimPlayer.ST_DODGING
+	return _result
+
+func playAttackAnim(_attackResult:Dictionary, _pcAttacks:bool, _pcStatus:int = 0, _npcStatus:int = 0):
+	var theAttackAr = _attackResult.get("attackerAnimation", "")
+	var _attackID:String = theAttackAr if (theAttackAr is String) else theAttackAr[0]
+	var _customWep:String = theAttackAr[1] if ((theAttackAr is Array) && (theAttackAr.size() > 1)) else ""
+	var _didMiss:bool = _attackResult.get("missed", false)
+	var _didDodge:bool = _attackResult.get("dodged", false)
+	var _attackerID:int = 0 if _pcAttacks else 1
+	
+	_pcStatus |= getNPCStatus(GM.pc)
+	_npcStatus |= getNPCStatus(enemyCharacter)
+	if(_didMiss):
+		if(_pcAttacks):
+			_pcStatus |= CombatAnimPlayer.ST_MISSED
+		else:
+			_npcStatus |= CombatAnimPlayer.ST_MISSED
+	if(_didDodge):
+		if(_pcAttacks):
+			_npcStatus |= CombatAnimPlayer.ST_DODGING
+		else:
+			_pcStatus |= CombatAnimPlayer.ST_DODGING
+	
+	var _payload:Array = [
+		_attackID, _attackerID, _pcStatus if _pcAttacks else _npcStatus, _pcStatus if !_pcAttacks else _npcStatus, _customWep,
+	]
+	playAnimation(StageScene.Combat, "", {npc=enemyID, pc="pc", attack=_payload})
+	
+func playGetUpAnimsIfNeedTo():
+	var _pcStatus:int = getNPCStatus(GM.pc)
+	var _npcStatus:int = getNPCStatus(enemyCharacter)
+	
+	playAnimation(StageScene.Combat, "", {npc=enemyID, pc="pc", pcStance=GM.pc.getCombatStance(), npcStance=enemyCharacter.getCombatStance() if enemyCharacter else 0, statusUpdate=[_pcStatus, _npcStatus]})
+
+func playDefeatAnim():
+	if(state == "lost"):
+		playAnimation(StageScene.Combat, ("defeat" if !GM.pc.hasEffect(StatusEffect.Collapsed) else "knockedDownDefeat"), {npc=enemyID, pc="pc"})
+	if(state == "win"):
+		playAnimation(StageScene.Combat, "", {npc=enemyID, pc="pc", npcAction=("defeat" if !enemyCharacter.hasEffect(StatusEffect.Collapsed) else "knockedDownDefeat")})
+	

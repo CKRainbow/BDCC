@@ -159,6 +159,7 @@ func getActions(_indx:int):
 			addAction("forcedeepthroat", forcedeepthroatScore, "Force to deepthroat", "Make that slut deepthroat you")
 		if(state in ["blowjob", "deepthroat"]):
 			addEggStuffButton(DOM_0, SUB_0, BodypartSlot.Head)
+			addTriggerStraponAction(DOM_0)
 			
 			if(isReadyToCumHandled(DOM_0) && isStraponSex()):
 				addAction("domstraponcum", 1.0, "Cum!", "You're about to cum..", {A_PRIORITY: 1001})
@@ -215,6 +216,9 @@ func getActions(_indx:int):
 func doAction(_indx:int, _id:String, _action:Dictionary):
 	if(_id == "stuffegg"):
 		doStuffEggInto(DOM_0, SUB_0, BodypartSlot.Head)
+		return
+	if(_id == "triggerStrapon"):
+		triggerStrapon(_indx, SUB_0, BodypartSlot.Head)
 		return
 	if(_id == "domstraponcum"):
 		getDom().cumOnFloor()
@@ -498,6 +502,7 @@ func doAction(_indx:int, _id:String, _action:Dictionary):
 			addText("{sub.You} {sub.youVerb('try', 'tries')} to bite {dom.you} but {dom.youHe} {dom.youHeVerb('avoid')} it!")
 			return
 	if(_id == "pullaway"):
+		addResistanceIfPlayer(_indx)
 		var successChance:float = getSubResistChance(30.0, 25.0)
 		if(RNG.chance(successChance)):
 			getDomInfo().addAnger(0.3)
@@ -588,6 +593,8 @@ func getAnimation():
 		if(state in ["", "askingtolick"]):
 			return [StageScene.PuppySexOral, "tease", {pc=DOM_0, npc=SUB_0}]
 		if(state in ["licking", "grinding"]):
+			if(getDomInfo().isCloseToCumming() || (isStraponSex() && getSubInfo().isCloseToCumming())):
+				return [StageScene.PuppySexOral, "grindfast", {pc=DOM_0, npc=SUB_0}]
 			return [StageScene.PuppySexOral, "grind", {pc=DOM_0, npc=SUB_0}]
 		if(state in ["blowjob", "deepthroat"]):
 			if(getDomInfo().isCloseToCumming() || (isStraponSex() && getSubInfo().isCloseToCumming())):
@@ -600,6 +607,8 @@ func getAnimation():
 		if(state in ["", "askingtolick"]):
 			return [StageScene.StocksSexOral, "tease", {npc=DOM_0, pc=SUB_0}]
 		if(state in ["licking", "grinding"]):
+			if(getDomInfo().isCloseToCumming()):
+				return [StageScene.StocksSexOral, "pussyfast", {npc=DOM_0, pc=SUB_0}]
 			return [StageScene.StocksSexOral, "pussy", {npc=DOM_0, pc=SUB_0}]
 		if(state in ["blowjob", "deepthroat"]):
 			if(getDomInfo().isCloseToCumming() || (isStraponSex() && getSubInfo().isCloseToCumming())):

@@ -1,8 +1,8 @@
 extends Node
 
 var game_version_major = 0
-var game_version_minor = 3
-var game_version_revision = 2
+var game_version_minor = 4
+var game_version_revision = 1
 var game_version_suffix = ""
 
 var contributorsCredits:Dictionary = {
@@ -147,6 +147,10 @@ var contributorsCredits:Dictionary = {
 		"[url=https://github.com/Alexofp/BDCC/pull/336]#28[/url]",
 		"[url=https://github.com/Alexofp/BDCC/pull/342]#29[/url]",
 		"[url=https://github.com/Alexofp/BDCC/pull/347]#30[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/354]#31[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/356]#32[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/362]#33[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/365]#34[/url]",
 	],
 	"CheeseyCake92": [
 		"[url=https://github.com/Alexofp/BDCC/pull/158]#1[/url]",
@@ -181,6 +185,11 @@ var contributorsCredits:Dictionary = {
 		"[url=https://github.com/Alexofp/BDCC/pull/285]#10[/url]",
 		"[url=https://github.com/Alexofp/BDCC/pull/287]#11[/url]",
 		"[url=https://github.com/Alexofp/BDCC/pull/344]#12[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/359]#13[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/360]#14[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/364]#15[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/368]#16[/url]",
+		"[url=https://github.com/Alexofp/BDCC/pull/370]#17[/url]",
 	],
 	"SongJo": [
 		"42 great haircuts",
@@ -214,6 +223,9 @@ var contributorsCredits:Dictionary = {
 	],
 	"kristijanWolff": [
 		"[url=https://github.com/Alexofp/BDCC/pull/332]#1[/url]",
+	],
+	"Mindstormsman": [
+		"[url=https://github.com/Alexofp/BDCC/pull/366]#1[/url]",
 	],
 }
 
@@ -283,6 +295,7 @@ var sexGoals: Dictionary = {}
 var sexTypes: Dictionary = {}
 var sexReactionHandlersByID: Dictionary = {}
 var gameExtenders: Dictionary = {}
+var gameExtenderClasses: Dictionary = {}
 var computers: Dictionary = {}
 var fluids: Dictionary = {}
 var skins: Dictionary = {}
@@ -321,6 +334,10 @@ var recruits:Dictionary = {}
 var missions:Dictionary = {}
 var missionQuests:Dictionary = {}
 var contentBoardEntries:Dictionary = {}
+var combatAnims:Dictionary = {}
+var combatAnimsApplier := CombatAnimApplier.new()
+var combatAnimLen:Dictionary = {}
+var crotchBlocks : Dictionary = {}
 
 var bodypartStorageNode
 
@@ -492,6 +509,85 @@ func loadCached(theType:String, theID:String):
 
 func newCached(theType:String, theID:String):
 	return loadCached(theType, theID).new()
+
+func saveRegistryCache() -> Dictionary:
+	var data:Dictionary = {
+		version = getGameVersionString(),
+		pathToIDCache = pathToIDCache,
+		IDToPathCache = IDToPathCache,
+		sceneCreators = sceneCreators,
+		stageScenesCachedStates = stageScenesCachedStates,
+	}
+	
+	return data
+
+func loadRegistryCache(_data:Dictionary):
+	if(!_data.has("version") || _data["version"] != getGameVersionString()):
+		return
+	pathToIDCache = SAVE.loadVar(_data, "pathToIDCache", {})
+	IDToPathCache = SAVE.loadVar(_data, "IDToPathCache", {})
+	sceneCreators = SAVE.loadVar(_data, "sceneCreators", {})
+	stageScenesCachedStates = SAVE.loadVar(_data, "stageScenesCachedStates", {})
+
+func resetRegistryCache(shouldSaveToFile:bool=false):
+	pathToIDCache = {}
+	IDToPathCache = {}
+	sceneCreators = {}
+	stageScenesCachedStates = {}
+	fillBaseCacheFields()
+	if(shouldSaveToFile):
+		saveRegistryCacheToFile(true)
+
+const cacheFilePath = "user://registryCache.json"
+
+func saveRegistryCacheToFile(forceSave:bool = false):
+	if(!isCacheEnabled() && !forceSave):
+		return
+	var data:Dictionary = saveRegistryCache()
+
+	var save_game = File.new()
+	save_game.open(cacheFilePath, File.WRITE)
+	save_game.store_line(var2str(data))
+	save_game.close()
+
+func loadRegistryCacheFromFile():
+	checkCacheEnabled()
+	if(Util.hasCommandLineArgument("-resetRegistryCache")): # We just don't load it
+		fillBaseCacheFields()
+		return
+	if(!isCacheEnabled()):
+		fillBaseCacheFields()
+		return
+	var save_game = File.new()
+	if not save_game.file_exists(cacheFilePath):
+		fillBaseCacheFields()
+		return
+	
+	save_game.open(cacheFilePath, File.READ)
+	var data = str2var(save_game.get_as_text())
+	if(data is Dictionary):
+		loadRegistryCache(data)
+	save_game.close()
+	fillBaseCacheFields()
+
+const loadLockPath = "user://loadlock.lockfile" # Game creates this file when it starts loading. Then deletes it when it finishes loading. If this file exists -> the game crashed during the previous loading
+
+func doesLoadLockFileExist() -> bool:
+	var f:File = File.new()
+	return f.file_exists(loadLockPath)
+
+func createLoadLockFile():
+	var file = File.new()
+	file.open(loadLockPath, File.WRITE)
+	#file.store_string(content)
+	file.close()
+
+func deleteLoadLockFile():
+	if(doesLoadLockFileExist()):
+		var d:Directory = Directory.new()
+		d.remove(loadLockPath)
+
+
 
 
 func _init():
@@ -812,6 +908,10 @@ func registerEverything():
 	sortPlayerAttacks()
 	sortSpeechModifiersByPriority()
 	
+	registerCombatAnims()
+	calculateCombatAnimLens()
+	combatAnimsApplier.applyCombatAnims()
+	
 	GM.GES.registerAll()
 	
 	emit_signal("loadingUpdate", 17.0/totalStages, "Datapacks")
@@ -857,26 +957,14 @@ func getGameVersionString():
 func getGameVersionStringNoSuffix():
 	return str(game_version_major)+"."+str(game_version_minor)+"."+str(game_version_revision)
 
-func isVersionCompatible(otherversion:String):
-	otherversion = otherversion.strip_edges()
-	
-	if(otherversion == "*"):
-		return true
-	if(otherversion == getGameVersionStringNoSuffix()):
-		return true
-	if(otherversion == getGameVersionString()):
-		return true
-	return false
+func isVersionCompatible(otherversion:String) -> bool:
+	return Util.isVersionCompatible(getGameVersionStringNoSuffix(), otherversion)
 
-func isVersionListHasCompatible(versionlist):
+func isVersionListHasCompatible(versionlist) -> bool:
 	if(!(versionlist is String)):
 		return false
 	
-	var splitted = versionlist.split(",", false)
-	for theversion in splitted:
-		if(isVersionCompatible(theversion)):
-			return true
-	return false
+	return isVersionCompatible(versionlist)
 
 func registerScene(path: String, creator = null):
 	if(hasCachedPath(CACHE_SCENE, path)):
@@ -1158,6 +1246,22 @@ func getAttacks():
 
 func getPlayerAttackIDs():
 	return playerAttacksIDS
+
+func getCrotchBlocks() -> Dictionary:
+	return crotchBlocks
+
+func registerCrotchBlock(path:String) -> void:
+	if path in CrotchBlocks.getAllDefault():
+		Log.warning("Tried to replace default CrotchBlock, path '%s'" % path)
+		return
+	var resource = load(path)
+	if !resource:
+		Log.printerr("Error registering CrotchBlock at path '%s'" % path)
+		return
+	
+	var fname : String = path.get_file()
+	
+	crotchBlocks[fname.substr(0, fname.find_last("."))] = resource
 
 func registerStatusEffect(path: String):
 	var effect = load(path)
@@ -2195,6 +2299,7 @@ func registerGameExtender(path: String):
 	var object = loadedClass.new()
 	
 	gameExtenders[object.id] = object
+	gameExtenderClasses[object.id] = loadedClass
 
 func registerGameExtenderFolder(folder: String):
 	var scripts = getScriptsInFolder(folder)
@@ -2210,6 +2315,12 @@ func getGameExtender(id: String):
 
 func getGameExtenders():
 	return gameExtenders
+
+func recreateGameExtender(_id:String):
+	if(!gameExtenderClasses.has(_id)):
+		return
+	gameExtenders.erase(_id)
+	gameExtenders[_id] = gameExtenderClasses[_id].new()
 
 
 func registerLootTable(path: String):
@@ -3093,84 +3204,27 @@ func getContentBoardEntry(id: String):
 func getContentBoardEntries():
 	return contentBoardEntries
 
+func registerCombatAnims():
+	var thePack := CombatAnimPack.new()
+	for theID in thePack.anims:
+		combatAnims[theID] = thePack.anims[theID]
 
+func getCombatAnims() -> Dictionary:
+	return combatAnims
 
+func getCombatAnim(_id:String):
+	if(combatAnims.has(_id)):
+		return combatAnims[_id]
+	else:
+		Log.printerr("ERROR: combat anim with the id "+_id+" wasn't found")
+		return null
 
-
-
-
-
-
-func saveRegistryCache() -> Dictionary:
-	var data:Dictionary = {
-		pathToIDCache = pathToIDCache,
-		IDToPathCache = IDToPathCache,
-		sceneCreators = sceneCreators,
-		stageScenesCachedStates = stageScenesCachedStates,
-	}
+func calculateCombatAnimLens():
+	var theAnimsScene:Spatial = load("res://Player/Player3D/DollSkeletonCombat.glb").instance()
+	add_child(theAnimsScene)
+	var theAnimPlayer:AnimationPlayer = theAnimsScene.get_child(0)
 	
-	return data
+	for theAnimName in theAnimPlayer.get_animation_list():
+		combatAnimLen[theAnimName] = theAnimPlayer.get_animation(theAnimName).length
+	pass
 
-func loadRegistryCache(_data:Dictionary):
-	pathToIDCache = SAVE.loadVar(_data, "pathToIDCache", {})
-	IDToPathCache = SAVE.loadVar(_data, "IDToPathCache", {})
-	sceneCreators = SAVE.loadVar(_data, "sceneCreators", {})
-	stageScenesCachedStates = SAVE.loadVar(_data, "stageScenesCachedStates", {})
-
-func resetRegistryCache(shouldSaveToFile:bool=false):
-	pathToIDCache = {}
-	IDToPathCache = {}
-	sceneCreators = {}
-	stageScenesCachedStates = {}
-	fillBaseCacheFields()
-	if(shouldSaveToFile):
-		saveRegistryCacheToFile(true)
-
-const cacheFilePath = "user://registryCache.json"
-
-func saveRegistryCacheToFile(forceSave:bool = false):
-	if(!isCacheEnabled() && !forceSave):
-		return
-	var data:Dictionary = saveRegistryCache()
-
-	var save_game = File.new()
-	save_game.open(cacheFilePath, File.WRITE)
-	save_game.store_line(var2str(data))
-	save_game.close()
-
-func loadRegistryCacheFromFile():
-	checkCacheEnabled()
-	if(Util.hasCommandLineArgument("-resetRegistryCache")): # We just don't load it
-		fillBaseCacheFields()
-		return
-	if(!isCacheEnabled()):
-		fillBaseCacheFields()
-		return
-	var save_game = File.new()
-	if not save_game.file_exists(cacheFilePath):
-		fillBaseCacheFields()
-		return
-	
-	save_game.open(cacheFilePath, File.READ)
-	var data = str2var(save_game.get_as_text())
-	if(data is Dictionary):
-		loadRegistryCache(data)
-	save_game.close()
-	fillBaseCacheFields()
-
-const loadLockPath = "user://loadlock.lockfile" # Game creates this file when it starts loading. Then deletes it when it finishes loading. If this file exists -> the game crashed during the previous loading
-
-func doesLoadLockFileExist() -> bool:
-	var f:File = File.new()
-	return f.file_exists(loadLockPath)
-
-func createLoadLockFile():
-	var file = File.new()
-	file.open(loadLockPath, File.WRITE)
-	#file.store_string(content)
-	file.close()
-
-func deleteLoadLockFile():
-	if(doesLoadLockFileExist()):
-		var d:Directory = Directory.new()
-		d.remove(loadLockPath)

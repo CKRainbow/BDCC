@@ -18,6 +18,13 @@ func getFlags():
 		
 		"kaitApproach": flag(FlagType.Text), # What Kait will say when you approach her. Will reset after
 		"avyApproach": flag(FlagType.Text), # What Avy will say when you approach her. Will reset after
+		
+		"gotKaitPregMaybe": flag(FlagType.Bool), # Did the player use a cum-loaded strapon while fucking Kait. Means that they could be responsible
+		"kaitGaveBirths": flag(FlagType.Number), # How many times did Kait give birth
+		"kaitGaveBirthsNearPC": flag(FlagType.Number), # How many times did pc help Kait
+		"kaitDidCuddle": flag(FlagType.Bool), # Did we cuddle with Kait during this pregnancy. Resets when she gets prego again
+		"ftphap": flag(FlagType.Bool), # First time pregnant scene happened
+		"ftpembrace": flag(FlagType.Bool), # First time pregnant scene did pc embrace
 	}
 
 func _init():
@@ -52,6 +59,18 @@ func _init():
 		"res://Modules/KaitModule/Kait/KaitTalkScene.gd",
 		
 		"res://Modules/KaitModule/Announcer/AnsDomRouteChatScene.gd",
+		
+		"res://Modules/KaitModule/Avy/AvyObedienceProstateMilkingScene.gd",
+		"res://Modules/KaitModule/Avy/AvyLovePenisPumpScene.gd",
+		"res://Modules/KaitModule/Kait/KaitObedienceChokeScene.gd",
+		"res://Modules/KaitModule/Kait/KaitLoveRideYouScene.gd",
+		
+		"res://Modules/KaitModule/Kait/Preg/KaitFirstTimePregnantScene.gd",
+		"res://Modules/KaitModule/Kait/Preg/KaitPregCuddleScene.gd",
+		"res://Modules/KaitModule/Kait/Preg/KaitHelpGiveBirthScene.gd",
+		"res://Modules/KaitModule/Kait/Preg/KaitPregMilkPumpsScene.gd",
+		"res://Modules/KaitModule/Kait/Preg/KaitPregBreastfeedOnScene.gd",
+		"res://Modules/KaitModule/Kait/Preg/KaitPregMenuScene.gd",
 	]
 	characters = [
 	]
@@ -63,6 +82,7 @@ func _init():
 		"res://Modules/KaitModule/Chapter1/DomCh1RahiRecEvent.gd",
 		"res://Modules/KaitModule/Hideout/HideoutFunctionsEvent.gd",
 		"res://Modules/KaitModule/Avy/AvyLoveObedienceEvent.gd",
+		"res://Modules/KaitModule/Kait/Preg/KaitFirstTimePregnantEvent.gd",
 	]
 	quests = [
 		"res://Modules/KaitModule/Chapter0/DomRouteIntroQuest.gd",

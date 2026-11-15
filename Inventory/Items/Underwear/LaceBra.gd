@@ -46,12 +46,8 @@ func generateItemState():
 	itemState.canActuallyBeDamaged = true
 
 func getRiggedParts(_character):
-	if(itemState.isRemoved() || itemState.isBraPulledUp()):
+	if(itemState.isRemoved()):
 		return null
-	if(itemState.isDamaged()):
-		return {
-			"bra": "res://Inventory/RiggedModels/Bra/BraDamaged.tscn",
-		}
 	return {
 		"bra": "res://Inventory/RiggedModels/Bra/Bra.tscn",
 	}

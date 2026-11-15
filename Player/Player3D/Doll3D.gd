@@ -220,8 +220,11 @@ func addPartUnlessSame(slot, partPath):
 	if(parts.has(slot)):
 		var oldpart: Spatial = parts[slot]
 		if(oldpart.filename == partPath):
-			if(callbackObj != null && callbackObj.has_method("onDollUpdate")):
-				callbackObj.onDollUpdate(self, slot, oldpart)
+			if(callbackObj != null):
+				if(callbackObj.has_method("onDollUpdate")):
+					callbackObj.onDollUpdate(self, slot, oldpart)
+				if(oldpart.has_method("updateFromItem")):
+					oldpart.updateFromItem(callbackObj)
 			return
 	addPart(slot, partPath, callbackObj)
 		
@@ -256,8 +259,11 @@ func addPartObject(slot, part: Spatial, callbackObj = null):
 	for stateID in state:
 		part.setState(stateID, state[stateID])
 	
-	if(callbackObj != null && callbackObj.has_method("onDollUpdate")):
-		callbackObj.onDollUpdate(self, slot, part)
+	if(callbackObj != null):
+		if(callbackObj.has_method("onDollUpdate")):
+			callbackObj.onDollUpdate(self, slot, part)
+		if(part.has_method("updateFromItem")):
+			part.updateFromItem(callbackObj)
 	
 func removeDollAttachmentZone(attachZone):
 	attachZone.queue_free()
@@ -315,8 +321,8 @@ func loadCharacter(charID):
 	
 	if(ch.has_method("updateDoll")):
 		disconnectFromOld()
-		ch.updateDoll(self)
 		savedCharacterID = charID
+		ch.updateDoll(self)
 		var _ok = ch.connect("bodypart_changed", self, "onCharacterBodypartChanged")
 		
 func prepareCharacter(charID):
@@ -331,6 +337,9 @@ func prepareCharacter(charID):
 	call_deferred("checkDirection") # Deferred because the character is usually flipped after this call
 
 func checkDirection():
+	var theParent = get_parent()
+	if(!(theParent is Spatial)):
+		return
 	var newIsFacingRight:bool = (get_scale().x*(get_parent().get_scale().x if get_parent() else 1.0) < 0)
 	
 	if(newIsFacingRight != isFacingRight):
@@ -591,6 +600,9 @@ func getAnimPlayer2():
 
 func getAnimPlayer3():
 	return $DollSkeleton3/AnimationPlayer
+
+func getAnimPlayerCombat():
+	return $DollSkeletonCombat/AnimationPlayer
 
 func setArmsCuffed(newcuffed):
 	armsCuffed = newcuffed

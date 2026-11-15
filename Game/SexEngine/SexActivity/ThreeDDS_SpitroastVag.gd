@@ -175,6 +175,7 @@ func getActions(_indx:int):
 		
 		if(state in ["sex", "inside"]):
 			addEggStuffButton(_indx, SUB_0, usedBodypart if _indx == DOM_0 else S_MOUTH)
+			addTriggerStraponAction(_indx)
 		
 		if(state == ""):
 			addAction("rub", 1.0 if !isReadyToPenetrate(_indx) else 0.4, "Rub", "Rub your cock against them", {A_PRIORITY: 4})
@@ -198,6 +199,9 @@ func getActions(_indx:int):
 			if(isReadyToCumHandled(SUB_0)):
 				addAction("subcum", 1.0, "Cum!", "You're about to cum!", {A_PRIORITY: 1001})
 func doAction(_indx:int, _id:String, _action:Dictionary):
+	if(_id == "triggerStrapon"):
+		triggerStrapon(_indx, SUB_0, usedBodypart if _indx == DOM_0 else S_MOUTH)
+		return
 	if(_id == "stuffegg"):
 		doStuffEggInto(_indx, SUB_0, usedBodypart if _indx == DOM_0 else S_MOUTH)
 	if(_id == "switch"):
@@ -268,6 +272,7 @@ func doAction(_indx:int, _id:String, _action:Dictionary):
 		return
 
 	if(_id == "pullaway"):
+		addResistanceIfPlayer(_indx)
 		var successChance:float = getSubResistChance(30.0, 25.0)
 		if(RNG.chance(successChance)):
 			addText("{sub.You} {sub.youVerb('pull')} away from {dom.you}.")
@@ -311,7 +316,7 @@ func getSubResistChance(baseChance:float, domAngerRemoval:float) -> float:
 func getAnimation():
 	if(getSexType() == SexType.StocksSex):
 		if(state == "inside"):
-			return [StageScene.StocksSpitroast, "tease", {pc=SUB_0, npc=DOM_0, npc2=DOM_1, npcBodyState={hard=true}, npc2BodyState={hard=true}}]
+			return [StageScene.StocksSpitroast, "inside", {pc=SUB_0, npc=DOM_0, npc2=DOM_1, npcBodyState={hard=true}, npc2BodyState={hard=true}}]
 		if(state == "sex"):
 			if((isCloseToCumming(DOM_0) && isCloseToCumming(DOM_1)) || (isStrapon(DOM_0) && isStrapon(DOM_1) && isCloseToCumming(SUB_0))):
 				return [StageScene.StocksSpitroast, "fast", {pc=SUB_0, npc=DOM_0, npc2=DOM_1, npcBodyState={hard=true}, npc2BodyState={hard=true}}]

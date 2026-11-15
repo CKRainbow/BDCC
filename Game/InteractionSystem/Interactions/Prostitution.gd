@@ -9,6 +9,9 @@ var clientSatisfaction:float = 0.0
 var lastClientID:String = ""
 var clientApproached:bool = false
 var clientRequestedAskType:String = ""
+var clientCooldowns:Dictionary = {}
+
+var clientCooldownSeconds:int = 2*60*60
 
 func _init():
 	id = "Prostitution"
@@ -28,14 +31,14 @@ func init_text():
 
 func init_do(_id:String, _args:Dictionary, _context:Dictionary):
 	if(_id == "search"):
-		var pawnIDs = findProstitutionTargetsNearby([lastClientID])
+		var ignoreList:Array = []
+		for charID in clientCooldowns:
+			ignoreList.append(charID)
+		var pawnIDs:Array = findProstitutionTargetsNearby(ignoreList)
 		if(!pawnIDs.empty()):
 			var pawnID = RNG.pick(pawnIDs)
-			lastClientID = pawnID
-			doInvolvePawn("client", pawnID)
 			clientApproached = false
-			clientRequestedAskType = ""
-			setState("found_client", "main")
+			setClientToCharID(pawnID)
 			return
 		setState("", "main")
 	if(_id == "wait"):
@@ -85,15 +88,16 @@ func found_client_text():
 	else:
 		addDisabledAction(ACTION_NAME_USUAL, ACTION_DESC_CLIENT_NOT_INTERESTED)
 	if(clientRequestedAskType in ["", "service"]):
-		if(roleCanStartSex("main") && hasRepLevelPC("main", RepStat.Whore, 4)):
-			addAction("service", ACTION_NAME_SERVICE_DOM, "You will be in charge. It takes more effort.. so you will be taking more credits", "sexDom", 1.0, 60, {})
+		var hasWhoreRepForServiceDom:bool = hasWhoreRepLevelPC_forAskType("service")
+		if(roleCanStartSex("main") && ((clientRequestedAskType == "service") || hasWhoreRepForServiceDom)):
+			addAction("service", ACTION_NAME_SERVICE_DOM, "You will be in charge. It takes more effort"+(".. so you will be taking more credits" if(hasWhoreRepForServiceDom) else " but your whore reputation is not high enough to demand more credits"), "sexDom", 1.0, 60, {})
 			haveAnyOptions = true
 		else:
 			addDisabledAction(ACTION_NAME_SERVICE_DOM, "You can't be a service dom with your restraints.." if !roleCanStartSex("main") else "Your whore reputation is not high enough for this..")
 	else:
 		addDisabledAction(ACTION_NAME_SERVICE_DOM, ACTION_DESC_CLIENT_NOT_INTERESTED)
 	if(clientRequestedAskType in ["", "usual"]):
-		if(roleCanStartSex("client") && hasRepLevelPC("main", RepStat.Whore, 8)):
+		if(roleCanStartSex("client") && hasWhoreRepLevelPC_forAskType("pricy")):
 			addAction("pricy_slut", ACTION_NAME_PRICY_SLUT, "Ask for a lot of credits to let them fuck you.. You will have to really satisfy them though..", "resist", 1.0, 60, {})
 			haveAnyOptions = true
 		else:
@@ -113,7 +117,9 @@ func found_client_do(_id:String, _args:Dictionary, _context:Dictionary):
 		setState("giving_offer", "client")
 	if(_id == "service"):
 		askType="service"
-		askCreds = getRolePawn("main").getProstitutionCreditsCost(getRolePawn("client"), 2.0, true)
+		var hasWhoreRepForServiceDom:bool = hasWhoreRepLevelPC_forAskType("service")
+		var creditsCostMult:float = 2.0 if(hasWhoreRepForServiceDom) else 1.0
+		askCreds = getRolePawn("main").getProstitutionCreditsCost(getRolePawn("client"), creditsCostMult, true)
 		slutDom = true
 		setState("giving_offer", "client")
 	if(_id == "pricy_slut"):
@@ -243,7 +249,7 @@ func offer_accepted_do(_id:String, _args:Dictionary, _context:Dictionary):
 		setState("about_to_sex", "main")
 	if(_id == "scam"):
 		setState("slut_scam", "client")
-		affectAffection("client", "main", -0.15)
+		#affectAffection("client", "main", -0.15)
 		sendSocialEvent("main", "client", SocialEventType.GotScammed)
 
 
@@ -444,6 +450,7 @@ func slut_scam_text():
 
 func slut_scam_do(_id:String, _args:Dictionary, _context:Dictionary):
 	if(_id == "pay"):
+		affectAffection("client", "main", -0.15)
 		askCreds += 5
 		if(getRolePawn("client").isPlayer()):
 			GM.pc.addCredits(-5)
@@ -453,8 +460,10 @@ func slut_scam_do(_id:String, _args:Dictionary, _context:Dictionary):
 		
 		sendSlaveryActivityEvent("main", "slutPaid", {credits=5})
 	if(_id == "leave"):
+		affectAffection("client", "main", -0.15)
 		setState("client_leaving_grumbly", "client")
 	if(_id == "demand_creds_back"):
+		affectAffection("client", "main", -0.15)
 		setState("client_demands_credits", "main")
 
 
@@ -492,11 +501,12 @@ func opposite_role_request_denied_do(_id:String, _args:Dictionary, _context:Dict
 func getInterruptActions(_pawn:CharacterPawn) -> Array:
 	var result:Array = []
 	if(getPawnCount() == 1):
+		var approachScore:float = -0.01 if(clientCooldowns.has(_pawn.charID)) else 0.5
 		result.append({
 			id = "approach",
 			name = "Approach",
 			desc = "See what they are offering..",
-			score = 0.5,
+			score = approachScore,
 			scoreType = "sexUse",
 			scoreRole = "main",
 			args = {},
@@ -505,10 +515,8 @@ func getInterruptActions(_pawn:CharacterPawn) -> Array:
 
 func doInterruptAction(_pawn:CharacterPawn, _id:String, _args:Dictionary, _context:Dictionary):
 	if(_id == "approach"):
-		doInvolvePawn("client", _pawn.charID)
 		clientApproached = true
-		clientRequestedAskType = ""
-		setState("found_client", "main")
+		setClientToCharID(_pawn.charID)
 
 
 func getAnimData() -> Array:
@@ -516,11 +524,35 @@ func getAnimData() -> Array:
 		return [StageScene.Duo, "stand", {pc="main", npc="client"}]
 	return [StageScene.Solo, "stand", {pc="main"}]
 
+func hasWhoreRepLevelPC_forAskType(_askType:String) -> bool:
+	if(_askType == "pricy"):
+		return hasRepLevelPC("main", RepStat.Whore, 8)
+	if(_askType == "service"):
+		return hasRepLevelPC("main", RepStat.Whore, 4)
+	return true
+
 func isSlutDom():
 	return slutDom
 
+func setClientToCharID(charID:String) -> void:
+	lastClientID = charID
+	# let creatures be obsessed sometimes, as a treat
+	if(RNG.chance(95)):
+		clientCooldowns[charID] = clientCooldownSeconds
+	doInvolvePawn("client", charID)
+	clientRequestedAskType = ""
+	setState("found_client", "main")
+
 func processTime(_howMuch:int):
 	jobTime += _howMuch
+	if(clientCooldowns.empty() || _howMuch <= 0):
+		return
+	var newClientCooldowns:Dictionary = {}
+	for charID in clientCooldowns:
+		clientCooldowns[charID] -= _howMuch
+		if(clientCooldowns[charID] > 0):
+			newClientCooldowns[charID] = clientCooldowns[charID]
+	clientCooldowns = newClientCooldowns
 	
 func getActivityIconForRole(_role:String):
 	if(getPawnCount() == 1):
@@ -547,6 +579,7 @@ func saveData():
 	data["lastClientID"] = lastClientID
 	data["clientApproached"] = clientApproached
 	data["clientReqAskType"] = clientRequestedAskType
+	data["clientCooldowns"] = clientCooldowns
 	return data
 
 func loadData(_data):
@@ -561,4 +594,5 @@ func loadData(_data):
 	lastClientID = SAVE.loadVar(_data, "lastClientID", "")
 	clientApproached = SAVE.loadVar(_data, "clientApproached", false)
 	clientRequestedAskType = SAVE.loadVar(_data, "clientReqAskType", "")
+	clientCooldowns = SAVE.loadVar(_data, "clientCooldowns", {})
 

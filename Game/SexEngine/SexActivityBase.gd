@@ -77,6 +77,15 @@ func unClampValue(_theVal:float, _theBorder:float) -> float:
 		_theVal = -_theBorder
 	return _theVal
 
+func addResistanceIfPlayer(_index:int, _am:float = 0.3):
+	if(getDomOrSubID(_index) != "pc"):
+		return
+	var theInfo:SexInfoBase = getDomOrSubInfo(_index)
+	if(!theInfo):
+		return
+	if(theInfo is SexSubInfo):
+		theInfo.addResistance(_am)
+
 func exposeToFetish(_indxTarget:int, _fetishID:String, _intensity:int, _indxExposer:int):
 	var info1:SexInfoBase = getDomOrSubInfo(_indxTarget)
 	
@@ -3560,3 +3569,23 @@ func doStuffEggInto(_roleMain:int, _roleTarget:int, _bodypart:String, _showMessa
 			if(_showMessage && !theResult.get("text", "").empty()):
 				addTextRaw(theResult["text"])
 	return {success = false}
+
+func addTriggerStraponAction(_who:int, _score:float = 0.0, _actionID:String = "triggerStrapon") -> bool:
+	if(isWearingStrapon(_who)):
+		var strapon = getDomOrSub(_who).getWornStrapon()
+		if(strapon.getFluids() != null && !strapon.getFluids().isEmpty()):
+			addAction(_actionID, _score, "Trigger strapon", "Make the strapon release its load!", {A_PRIORITY: 2})
+			return true
+	return false
+			
+func triggerStrapon(_who:int, _target:int, _bodypart:String, _showText:bool = true) -> bool:
+	if(isWearingStrapon(_who)):
+		var strapon = getDomOrSub(_who).getWornStrapon()
+		if(strapon.getFluids() != null && !strapon.getFluids().isEmpty()):
+			getDomOrSub(_target).cummedInBodypartByAdvanced(_bodypart, getDomOrSubID(_who), {}, FluidSource.Strapon)
+			var theDom:String = indxToTextID(_who)
+			var theSub:String = indxToTextID(_target)
+			if(_showText):
+				addText("{"+theDom+".You} {"+theDom+".youVerb('trigger')} {"+theDom+".yourHis} {"+theDom+".penisStrapon} to [b]release its contents inside {"+theSub+".you}[/b]!")
+			return true
+	return false

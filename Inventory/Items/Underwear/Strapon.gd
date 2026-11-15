@@ -41,10 +41,12 @@ func getTags():
 			ItemTag.Strapon,
 			ItemTag.SoldByMedicalVendomat,
 			ItemTag.SoldByTheAnnouncer,
+			ItemTag.StraponUsedByNPC,
 			]
 	return [
 		ItemTag.Strapon,
 		ItemTag.SoldByTheAnnouncer,
+		ItemTag.StraponUsedByNPC,
 		]
 
 #func generateItemState():

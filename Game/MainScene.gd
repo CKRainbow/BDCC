@@ -130,7 +130,7 @@ func getCharacters():
 func getDynamicCharacters():
 	return dynamicCharacters
 
-func addDynamicCharacter(character, printDebug = true):
+func addDynamicCharacter(character, printDebug = false):
 	if(!(character.isDynamicCharacter())):
 		assert(false, "addDynamicCharacter() Received a non-dynamic character")
 		
@@ -146,7 +146,7 @@ func addDynamicCharacter(character, printDebug = true):
 	if(printDebug):
 		Log.print("addDynamicCharacter(): Adding "+str(newCharID)+" character "+Util.getStackFunction())
 		
-func removeDynamicCharacter(characterID, printDebug = true):
+func removeDynamicCharacter(characterID, printDebug = false):
 	if(!(characterID is String)):
 		characterID = characterID.getID()
 	
@@ -261,6 +261,8 @@ func startNewGame():
 	for scene in sceneStack:
 		scene.queue_free()
 	sceneStack = []
+	
+	GM.GES.recreateExtendersOnLoad()
 	
 	applyAllWorldEdits()
 	GM.world.addTransitions()
@@ -2451,3 +2453,21 @@ func isEventBusy(_checkID:String) -> bool:
 	if(checkData == null):
 		return false
 	return true
+
+func calculateNpcsWithPortalPanties() -> Array:
+	var result:Array = []
+	if(GM.pc.isWearingPortalPantiesOrPortalCage()):
+		result.append(GM.pc)
+	var staticChars = GM.main.getCharacters()
+	for charID in staticChars:
+		var character:Character = staticChars[charID]
+		if(character.isWearingPortalPantiesOrPortalCage() || character.isWearingInvisiblePortalPanties()):
+			character.updateNonBattleEffects()
+			result.append(character)
+	var dynamicChars = GM.main.getDynamicCharacters()
+	for charID in dynamicChars:
+		var character:Character = dynamicChars[charID]
+		if(character.isWearingPortalPantiesOrPortalCage() || character.isWearingInvisiblePortalPanties()):
+			character.updateNonBattleEffects()
+			result.append(character)
+	return result

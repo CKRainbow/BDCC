@@ -161,3 +161,11 @@ func getDefaultEquipment():
 
 func getLootTable(_battleName):
 	return InmateLoot.new()
+
+func getCombatStance() -> int:
+	return CombatStance.STANCE_COMBAT_RELAXED
+
+func onGivingBirth(_impregnatedEggCells: Array, _newkids: Array):
+	.onGivingBirth(_impregnatedEggCells, _newkids)
+	GM.main.increaseModuleFlag("KaitModule", "kaitGaveBirths", 1)
+	GM.main.setFlag("KaitModule.kaitDidCuddle", false)

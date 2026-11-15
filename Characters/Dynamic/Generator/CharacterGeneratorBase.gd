@@ -46,7 +46,7 @@ func pickNonStaticEquipment(_character:DynamicCharacter, _args = {}):
 	pass
 
 func pickedSpeciesType(_args = {}):
-	return "guard"
+	return CharacterType.Generic
 
 func pickSpecies(character:DynamicCharacter, _args = {}):
 	if(_args.has(NpcGen.Species)):
@@ -177,6 +177,7 @@ func pickAttacks(character:DynamicCharacter, _args = {}):
 		if(RNG.chance(50)):
 			baseAttacks.append(possibleAttack)
 	character.npcAttacks = baseAttacks
+	character.combatStance = CombatStance.generateStanceBasedOnCharacter(character)
 
 func pickPersonality(character:DynamicCharacter, _args = {}):
 	var personality = character.getPersonality()

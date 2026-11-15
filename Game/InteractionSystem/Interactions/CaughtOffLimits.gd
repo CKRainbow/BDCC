@@ -41,7 +41,9 @@ func init_text():
 
 	addAction("fight", "Fight!", "Protect yourself!", "fight", 1.0, 60, {})
 	addAction("surrender", "Surrender", "Maybe they won't be mean", "surrender", 1.0, 60, {})
-
+	if(getRolePawn("inmate").isPlayer()):
+		GM.ES.triggerRun(Trigger.CaughtOffLimitsByDynamicNPC, [getRoleID("guard"), getRolePawn("guard").getCharType()])
+	
 func init_do(_id:String, _args:Dictionary, _context:Dictionary):
 	if(_id == "fight"):
 		setState("about_to_fight", "guard")
@@ -80,6 +82,10 @@ func surrendered_text():
 	addAction("frisk", "Frisk", "Go easy on them and just frisk them", "punish", 1.0, 30, {})
 
 func surrendered_do(_id:String, _args:Dictionary, _context:Dictionary):
+	if(getCharByRole("inmate").isPlayer() && GM.ES.triggerReact(Trigger.LostOrSurrenderedToDynamicNPC, [getRoleID("guard"), getCharByRole("guard").getCharType(), true])):
+		stopMe()
+		return
+	
 	if(_id == "punish"):
 		startInteraction("PunishInteraction", {punisher=getRoleID("guard"), target=getRoleID("inmate")})
 	if(_id == "frisk"):
@@ -129,6 +135,10 @@ func guard_won_text():
 	addDefeatButtons("guard", "inmate")
 
 func guard_won_do(_id:String, _args:Dictionary, _context:Dictionary):
+	if(getCharByRole("inmate").isPlayer() && GM.ES.triggerReact(Trigger.LostOrSurrenderedToDynamicNPC, [getRoleID("guard"), getCharByRole("guard").getCharType(), false])):
+		stopMe()
+		return
+	
 	if(_id == "punish"):
 		startInteraction("PunishInteraction", {punisher=getRoleID("guard"), target=getRoleID("inmate")})
 	if(_id == "frisk"):
@@ -227,6 +237,12 @@ func getAnimData() -> Array:
 		return [StageScene.Duo, "shove", {pc="inmate", npc="guard", npcAction="hurt"}]
 	if(getState() == "escorted_out"):
 		return [StageScene.Duo, "hurt", {pc="inmate", npc="guard", npcAction="shove"}]
+	if(getState() == "escorting_out"):
+		return [StageScene.Duo, "walk", {pc="inmate", npc="guard", npcAction="walk", flipNPC=true}]
+	if(getState() in ["about_to_frisk"]):
+		return [StageScene.Search, RNG.pick(["search", "stand"]), {pc="inmate", npc="guard"}]
+	if(getState() in ["frisk_failed", "frisked"]):
+		return [StageScene.Search, RNG.pick(["idle", "standidle"]), {pc="inmate", npc="guard"}]
 	return [StageScene.Duo, "stand", {pc="inmate", npc="guard"}]
 
 func startEscortOut():

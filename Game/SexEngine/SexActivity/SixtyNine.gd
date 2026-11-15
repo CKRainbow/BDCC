@@ -180,6 +180,7 @@ func doAction(_indx:int, _id:String, _action:Dictionary):
 		return
 
 	if(_id == "pullaway"):
+		addResistanceIfPlayer(_indx)
 		var successChance:float = getSubResistChance(30.0, 25.0)
 		if(RNG.chance(successChance)):
 			getDomInfo().addAnger(0.3)
@@ -408,6 +409,8 @@ func getAnimation():
 			aName += "M"
 		else:
 			aName += "F"
+		if(getDomInfo().isCloseToCumming() || getSubInfo().isCloseToCumming()):
+			aName += "fast"
 		
 		return [StageScene.Sex69, aName, {npc=DOM_0, pc=SUB_0, bodyState={hard=true}, npcBodyState={hard=true}}]
 	return [StageScene.Sex69, "tease", {npc=DOM_0, pc=SUB_0}]

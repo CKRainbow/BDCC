@@ -29,7 +29,7 @@ func canStartActivity(_sexEngine: SexEngine, _domInfo: SexDomInfo, _subInfo: Sex
 
 func getTags(_indx:int) -> Array:
 	if(_indx == DOM_0):
-		if(getState() in ["blowjob", "lickingcock", "licking", "grinding"]):
+		if(getState() in ["blowjob", "lickingcock", "licking", "grinding", "tonguefucking"]):
 			return [SexActivityTag.MouthUsed, SexActivityTag.HavingSex]
 		return [SexActivityTag.HavingSex]
 	if(_indx == SUB_0):
@@ -462,6 +462,7 @@ func doAction(_indx:int, _id:String, _action:Dictionary):
 		#addText("SOMETHING WENT WRONG")
 		return
 	if(_id == "pullaway"):
+		addResistanceIfPlayer(_indx)
 		var successChance:float = getResistChance(SUB_0, DOM_0, RESIST_ORAL_FOCUS, 30.0, 25.0)
 		if(RNG.chance(successChance)):
 			addText("{sub.You} {sub.youVerb('pull')} away from {dom.you}.")
@@ -522,17 +523,19 @@ func getAnimation():
 		if(state == "handjob" || state == "subabouttocumHandjob"):
 			return [StageScene.SlutwallSexOral, "handjob", {pc=SUB_0, npc=DOM_0, bodyState={hard=true}}]
 		
-		if(getState() in ["licking", "subabouttocum"]):
-			return [StageScene.SlutwallSexOral, "lick", {pc=SUB_0, npc=DOM_0}]
-		if(getState() in ["tonguefucking"]):
+		if(getState() in ["licking", "subabouttocum", "tonguefucking"]):
+			if(getSubInfo().isCloseToCumming()):
+				return [StageScene.SlutwallSexOral, "lickfast", {pc=SUB_0, npc=DOM_0}]
 			return [StageScene.SlutwallSexOral, "lick", {pc=SUB_0, npc=DOM_0}]
 		
 		if(getState() in ["blowjob", "subabouttocumcock"]):
-			if(getDomInfo().isCloseToCumming()):
-				return [StageScene.SlutwallSexOral, "blowjob", {pc=SUB_0, npc=DOM_0}]
+			if(getSubInfo().isCloseToCumming()):
+				return [StageScene.SlutwallSexOral, "blowjobfast", {pc=SUB_0, npc=DOM_0}]
 			return [StageScene.SlutwallSexOral, "blowjob", {pc=SUB_0, npc=DOM_0}]
 		
 		if(getState() in ["lickingcock"]):
+			if(getSubInfo().isCloseToCumming()):
+				return [StageScene.SlutwallSexOral, "lickfast", {pc=SUB_0, npc=DOM_0}]
 			return [StageScene.SlutwallSexOral, "lick", {pc=SUB_0, npc=DOM_0}]
 		
 	
@@ -543,14 +546,13 @@ func getAnimation():
 			return [StageScene.SexHandjob, "fast", {pc=SUB_0, npc=DOM_0, bodyState={hard=true}}]
 		return [StageScene.SexHandjob, "sex", {pc=SUB_0, npc=DOM_0, bodyState={hard=true}}]
 	
-	
-	if(getState() in ["licking", "subabouttocum"]):
-		return [StageScene.SexOral, "lick", {pc=SUB_0, npc=DOM_0}]
-	if(getState() in ["tonguefucking"]):
+	if(getState() in ["licking", "subabouttocum", "tonguefucking"]):
+		if(getSubInfo().isCloseToCumming()):
+			return [StageScene.SexOral, "lickfast", {pc=SUB_0, npc=DOM_0}]
 		return [StageScene.SexOral, "lick", {pc=SUB_0, npc=DOM_0}]
 	
 	if(getState() in ["blowjob", "subabouttocumcock"]):
-		if(getDomInfo().isCloseToCumming()):
+		if(getSubInfo().isCloseToCumming()):
 			return [StageScene.SexOral, "fast", {pc=SUB_0, npc=DOM_0}]
 		return [StageScene.SexOral, "sex", {pc=SUB_0, npc=DOM_0}]
 	

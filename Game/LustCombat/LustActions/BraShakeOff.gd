@@ -29,7 +29,7 @@ func doAction(_lustState: LustCombatState, _args):
 	var _item:ItemBase = getItem(_lustState, _args)
 	
 	var itemState: BraState = _args["itemState"]
-	itemState.remove()
+	itemState.removeNoAppearanceUpdate()
 	
 	var pc:Player = _lustState.getCharacter()
 	
@@ -60,7 +60,8 @@ func doAction(_lustState: LustCombatState, _args):
 		text += "\n\n"
 	
 	return {
-		text = text.replace("<casualName>", itemState.casualName)
+		text = text.replace("<casualName>", itemState.casualName),
+		anim = "LustBreastsShakeOff",
 	}
 
 func getLustTopics():

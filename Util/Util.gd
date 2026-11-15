@@ -914,3 +914,64 @@ static func getAndroidSaveFolder() -> String:
 	if(!theDir.dir_exists(theFold)):
 		theDir.make_dir_recursive(theFold)
 	return theFold
+
+static func getNextInArray(_ar:Array, _value):
+	var theSize:int = _ar.size()
+	for _i in theSize:
+		if(_ar[_i] == _value):
+			if((_i+1) >= theSize):
+				return 0
+			return _i + 1
+	return 0
+
+# input 0.132.67bugfix1
+# output 0.132.67
+static func stripSuffixFromVersion(_version:String) -> String:
+	var foundDots:int = 0
+	var result:String = ""
+	
+	for _c in _version:
+		if(_c in numbers_chars || _c == "*"):
+			result += _c
+		elif(_c == "." && foundDots < 2):
+			result += _c
+			foundDots += 1
+		else:
+			return result
+	return result
+
+static func isVersionCompatible(_ourVersion:String, _inputVersions:String, _ignoreSuffix:bool = true, _allowWildcards:bool = true) -> bool:
+	_ourVersion = _ourVersion.strip_edges()
+	if(_ignoreSuffix):
+		_ourVersion = stripSuffixFromVersion(_ourVersion)
+	var _ourSplit:Array = _ourVersion.split(".")
+	var _ourSplitLen:int = _ourSplit.size()
+	
+	var _inputVersionsList:Array = _inputVersions.split(",")
+	for _inputVersion in _inputVersionsList:
+		_inputVersion = _inputVersion.strip_edges()
+		if(_allowWildcards && _inputVersion == "*"):
+			return true
+		
+		if(_ignoreSuffix):
+			_inputVersion = stripSuffixFromVersion(_inputVersion)
+		
+		if(_ourVersion == _inputVersion):
+			return true
+	
+		var _inputSplit:Array = _inputVersion.split(".")
+		if(_inputSplit.size() != _ourSplitLen):
+			continue
+		
+		var _goodSplit:bool = true
+		for _i in _ourSplitLen:
+			if(_allowWildcards && _inputSplit[_i] == "*"):
+				continue
+			if(_ourSplit[_i] != _inputSplit[_i]):
+				_goodSplit = false
+				break
+		if(_goodSplit):
+			return true
+		
+	return false
+

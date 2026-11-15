@@ -2,6 +2,7 @@ extends ItemBase
 
 func _init():
 	id = "CasualClothes"
+	clothesColor = Color("22253e")
 
 func getVisibleName():
 	return "Casual clothes"
@@ -30,6 +31,7 @@ func getPuttingOnStringLong(withS):
 
 func generateItemState():
 	itemState = ShirtAndShortsState.new()
+	itemState.canActuallyBeDamaged = true
 
 func getRiggedParts(_character):
 	if(itemState.isRemoved()):

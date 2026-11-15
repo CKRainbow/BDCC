@@ -1,8 +1,26 @@
 extends "res://Player/Player3D/Parts/Part3D.gd"
 
+onready var bodywidepng = $bodywidepng
+onready var legup_deformable = $legupDeformable
+
 func setColor(newColor):
-	for mesh in [$bodywidepng]:
-		var theMat1:SpatialMaterial = mesh.get_surface_material(0)
-		var newMat:SpatialMaterial = theMat1.duplicate()
-		newMat.albedo_color = newColor
-		mesh.set_surface_material(0, newMat)
+	for theMesh in [bodywidepng, legup_deformable]:
+		var theMat:ShaderMaterial = getShaderMatUnique(theMesh)
+		if(!theMat):
+			continue
+		theMat.set_shader_param("color_r", newColor)
+
+func updateFromItem(_item):
+	if(!(_item.itemState is PantiesState)):
+		return
+	var _state:PantiesState = _item.itemState
+	var _dam:bool = _state.clothesDamaged
+	
+	legup_deformable.visible = _state.pulledDown
+	bodywidepng.visible = !_state.pulledDown
+	
+	for theMesh in [bodywidepng, legup_deformable]:
+		var theMat:ShaderMaterial = getShaderMatUnique(theMesh)
+		if(!theMat):
+			continue
+		theMat.set_shader_param("damage", 0.25 if _dam else 0.0)

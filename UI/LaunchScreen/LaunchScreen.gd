@@ -34,7 +34,6 @@ var startedPlaying:bool = false # Used to prevent the bug where you sometimes do
 
 var SHOW_THIS_SCREEN_ANYWAY:bool = false # DON'T FORGET TO CHANGE TO false BEFORE SHIPPING
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	#randomize()
 	#var diag:DialogueParser = DialogueParser.new()
@@ -118,6 +117,7 @@ func checkModOrderAndFillData(rawModList):
 	
 	ensureBDCCIsFirst()
 	updateModList()
+	
 	updateSelectedEntry()
 	GlobalRegistry.tempCurrentModOrder = currentModOrder
 
@@ -324,7 +324,7 @@ func tryToPopulateFilesList():
 	return "Failed to load info"
 
 func toggleModEntryDisabled(entry:Dictionary=selectedEntry) -> void:
-	if(entry == null or entry["name"] == "BDCC.pck"):
+	if(!entry || entry["name"] == "BDCC.pck"):
 		return
 	
 	entry["disabled"] = !entry["disabled"]
@@ -332,6 +332,8 @@ func toggleModEntryDisabled(entry:Dictionary=selectedEntry) -> void:
 	updateSelectedEntry()
 
 func _on_ModDisableButton_pressed():
+	if(!selectedEntry):
+		return
 	toggleModEntryDisabled(selectedEntry)
 
 
@@ -487,22 +489,22 @@ func _on_ModBrowser_closePressed():
 func _on_OpenModsFolder_pressed():
 	var _ok = Util.fixed_shell_open(ProjectSettings.globalize_path("user://mods"))
 
-func _input(event):
-	if(event.is_action_pressed("ui_down")):
-		onModEntryClicked(currentModOrder[currentModOrder.find(selectedEntry)+1])
-		return
-	if(event.is_action_pressed("ui_up")):
-		onModEntryClicked(currentModOrder[currentModOrder.find(selectedEntry)-1])
-		return
-	if(event.is_action_pressed("ui_select")):
-		_on_ModDisableButton_pressed()
-		return
-	if(event.is_action_pressed("ui_left")):
-		_on_MoveUpButton_pressed()
-		return
-	if(event.is_action_pressed("ui_right")):
-		_on_MoveDownButton_pressed()
-		return
+#func _unhandled_key_input(event):
+#	if(event.is_action_pressed("ui_down")):
+#		onModEntryClicked(currentModOrder[currentModOrder.find(selectedEntry)+1])
+#		return
+#	if(event.is_action_pressed("ui_up")):
+#		onModEntryClicked(currentModOrder[currentModOrder.find(selectedEntry)-1])
+#		return
+#	if(event.is_action_pressed("ui_select")):
+#		_on_ModDisableButton_pressed()
+#		return
+#	if(event.is_action_pressed("ui_left")):
+#		_on_MoveUpButton_pressed()
+#		return
+#	if(event.is_action_pressed("ui_right")):
+#		_on_MoveDownButton_pressed()
+#		return
 
 
 func _on_ResetGRCacheButton_pressed():

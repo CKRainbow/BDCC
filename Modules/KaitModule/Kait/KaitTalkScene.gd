@@ -33,17 +33,30 @@ func _run():
 			addButton("Dominate", "See what you can order Kait to do", "dom_menu")
 		else:
 			addDisabledButton("Dominate", "Kait's obedience must be above 2")
+		var _isPreg:bool = getCharacter("kait").isVisiblyPregnant()
+		if(_isPreg):
+			addButton("Pregnancy", "See what you can do with a pregnant Kait", "preg_menu")
+		elif(getFlag("KaitModule.kaitGaveBirths", 0) > 0 && getCharacter("kait").canBeMilked()):
+			addButton("Lactation", "See what you can do with a milky Kait", "preg_menu")
+		elif(getFlag("KaitModule.kaitGaveBirths", 0) > 0):
+			addDisabledButton("Pregnancy", "Kait isn't pregnant so you can't do these interactions.")
+		if(kaitLove >= 4 || kaitObedience >= 4):
+			addButton("Feed something", "Feed something to Kait", "feedmenu")
 		GM.ES.triggerRun(Trigger.TalkingToNPC, ["kait"])
 		addButton("Leave", "Enough chatting", "endthescene")
 	if(state == "sex_menu"):
 		saynn("What kind of sexual activity do you want to do with Kait?")
 
 		addButton("Back", "You changed your mind", "")
-		if(GM.pc.hasReachablePenis() || GM.pc.hasReachableVagina() || GM.pc.isWearingChastityCage()):
+		if (GM.pc.hasReachablePenis() || GM.pc.hasReachableVagina() || GM.pc.isWearingChastityCage()):
 			addButton("69", "(Love 2+) Lick or suck each other off!", "sex_69")
 		else:
 			addDisabledButton("69", "You need private bits to be able to do 69, sorry :(")
 		addButton("Finger her", "(Love 2+) Make that snep cum just from your fingers!", "sex_fingerher")
+		if (kaitLove >= 3):
+			addButton("Cowgirl sex", "(Love 3+) See if Kait wants to ride you", "sex_cowgirl")
+		else:
+			addDisabledButton("Love 3+", "Kait's love 3 or more required!")
 	if(state == "dom_menu"):
 		saynn("How do you wanna dominate Kait?")
 
@@ -53,6 +66,10 @@ func _run():
 			addDisabledButton("Oral sex", "You need to dominate Kait first before doing this!")
 		else:
 			addButton("Oral sex", "(Obedience 2+) Dominate Kait further and make her serve as your cock sucker or a pussy licker", "oral_sex")
+			if (kaitObedience >= 3):
+				addButton("Choke-sex", "(Obedience 3+) Choke Kait while also fucking her pussy!", "obey_chokesex")
+			else:
+				addDisabledButton("Obedience 3+", "Kait's obedience 3 or more required!")
 	if(state == "talk_menu"):
 		saynn("[say=pc]Can I ask you something?[/say]")
 
@@ -276,6 +293,10 @@ func _react(_action: String, _args):
 		endScene()
 		return
 
+	if(_action == "feedmenu"):
+		runScene("FeedSomethingScene", ["kait"])
+		return
+
 	if(_action == "sex_69"):
 		endScene()
 		runScene("KaitLove69Scene")
@@ -286,6 +307,11 @@ func _react(_action: String, _args):
 		runScene("KaitLoveFingerHerScene")
 		return
 
+	if(_action == "sex_cowgirl"):
+		endScene()
+		runScene("KaitLoveRideYouScene")
+		return
+
 	if(_action == "dom_light"):
 		endScene()
 		setFlag("KaitModule.didKaitDomIntro", true)
@@ -294,6 +320,16 @@ func _react(_action: String, _args):
 	if(_action == "oral_sex"):
 		endScene()
 		runScene("KaitObedienceOralSexScene")
+
+	if(_action == "obey_chokesex"):
+		endScene()
+		runScene("KaitObedienceChokeScene")
+		return
+
+	if(_action == "preg_menu"):
+		endScene()
+		runScene("KaitPregMenuScene")
+		return
 
 	setState(_action)
 

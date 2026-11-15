@@ -11,8 +11,11 @@ func canBeRemoved() -> bool:
 	return true
 
 func remove():
-	removed = true
+	removeNoAppearanceUpdate()
 	updateWearerAppearance()
+
+func removeNoAppearanceUpdate():
+	removed = true
 
 func getItem():
 	if(item == null):
@@ -34,6 +37,9 @@ func saveData():
 	
 func loadData(_data):
 	removed = SAVE.loadVar(_data, "removed", false)
+
+func getChangeStr() -> String:
+	return "r" if removed else "n"
 
 func blocksInventorySlots():
 	return []
